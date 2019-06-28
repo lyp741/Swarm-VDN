@@ -70,7 +70,7 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
         print("close")
 
     def on_message(self, message):
-        print("received message")
+        # print("received message")
         self.received_message(message)
         
     def callback(self, count):
@@ -125,14 +125,14 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
         
         observation = {"image": image, "depth":depth, "ir":ir, "ground":ground, "compass":compass, "target":target}
         reward = np.array(dat['reward'], dtype=np.float32)
-        print(reward)
+        
         end_episode = np.array(dat['endEpisode'], dtype=np.bool)
 
         actions = self.agent.get_action(observation, 0.8, end_episode)
         if args.model == 'None':
             self.agent.store_experience(observation, actions, reward, end_episode)
             self.agent.learn()
-        print(actions)
+        print(actions, reward)
         self.send_action(actions)
 
 class Application(tornado.web.Application):
