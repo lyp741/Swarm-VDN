@@ -125,12 +125,14 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
         
         observation = {"image": image, "depth":depth, "ir":ir, "ground":ground, "compass":compass, "target":target}
         reward = np.array(dat['reward'], dtype=np.float32)
+        print(reward)
         end_episode = np.array(dat['endEpisode'], dtype=np.bool)
 
-        actions = self.agent.get_action(observation, 0.7, end_episode)
+        actions = self.agent.get_action(observation, 0.8, end_episode)
         if args.model == 'None':
             self.agent.store_experience(observation, actions, reward, end_episode)
             self.agent.learn()
+        print(actions)
         self.send_action(actions)
 
 class Application(tornado.web.Application):

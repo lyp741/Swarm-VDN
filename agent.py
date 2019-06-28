@@ -4,7 +4,7 @@ from model import VDN
 from buffer import ReplayBuffer
 import torch.nn as nn
 import torch.optim as optim
-
+import random
 
 class Agent():
     def __init__(self):
@@ -67,10 +67,10 @@ class Agent():
         cat_cnn = self.get_new_cnn(state_cnn)
         cat_oth = self.get_new_oth(state_oth)
         q, actions = self.model(cat_cnn,cat_oth)
-        index_action = np.zeros((self.num_agents, 1), dtype=np.uint8)
+        index_action = np.zeros((self.num_agents,), dtype=np.uint8)
         for i in range(self.num_agents):
-            if np.random.rand() < epsilon:
-                index_action[i] = np.random.randint(0, self.num_of_actions)
+            if random.random() > epsilon:
+                index_action[i] = random.randint(0, self.num_of_actions)
             else:
                 index_action[i] = actions[0,i].item()
 
