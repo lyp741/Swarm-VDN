@@ -92,7 +92,7 @@ class Agent():
         state_cnn, state_oth, action, reward, next_cnn, next_oth, done = self.buffer.sample()
 
         max_q = self.target(next_cnn, next_oth)[0].detach()
-        pred_q, _ = self.model(state_cnn, state_oth)
+        _, _,  pred_q = self.model(state_cnn, state_oth, action)
         reward = reward.sum(1)
         true_q = reward + (1 - done[:,0]) * self.gamma * max_q
         criterion = nn.MSELoss()
