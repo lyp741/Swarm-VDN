@@ -36,15 +36,11 @@ class VDN(nn.Module):
         self.num_agents = num_agents
         self.device = device
 
-    def forward(self, state_cnn, state_oth, action=None):
-        take_action = None
+    def forward(self, state_cnn, state_oth):
         state_cnn = torch.tensor(state_cnn).float().to(self.device)
         state_oth = torch.tensor(state_oth).float().to(self.device)
         o = self.policy(state_cnn,state_oth)
         shaped = o.view(int(o.shape[0]/self.num_agents), self.num_agents, self.num_actions)
         max_q, actions = torch.max(shaped, 2)
-        if action is not None:
-            take_action = torch.take(shaped, action)
-            print('take action: ', take_action)
         q = max_q.sum(1)
-        return q, actions, take_action.sum(1)
+        return q, actions
