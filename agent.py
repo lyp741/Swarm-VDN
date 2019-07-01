@@ -8,7 +8,7 @@ import random
 
 class Agent():
     def __init__(self):
-        self.buffer_size = 10000
+        self.buffer_size =5000
         self.batch_size = 32
         self.num_agents = 0
         self.num_of_actions = 8
@@ -35,7 +35,8 @@ class Agent():
         for i in range(len(obs["image"])):
             temp.append(np.r_[obs["image"][i]])
         temp = np.r_[temp]
-        t = np.transpose(temp, (0,3,1,2))
+        t = np.transpose(temp, (0,3,1,2)).astype(float)
+        t /= 255.0
         return t
 
     def get_obs_oth(self, obs):
