@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 import datetime
+import os
 
 class Agent():
     def __init__(self, args):
@@ -18,6 +19,11 @@ class Agent():
         self.time = 0
         self.gamma = 0.9
         self.args = args
+        self.time_now = datetime.datetime.now().strftime('%Y-%m-%d')
+        try:
+            os.mkdir(self.time_now)
+        except:
+            pass
 
     def init(self, obs):
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -107,15 +113,16 @@ class Agent():
         self.optimizer.step()
         if self.time % 10 == 0:
             self.update_target()
-            self.save_model()
+        if self.time % 100 == 0:
+            self.save_model(self.time_now + '/' + str(self.num_agents) + '_' + str(self.time))
 
     def store_experience(self, obs, action, reward, done):
         state_cnn = self.get_obs_cnn(obs)
         state_oth = self.get_obs_oth(obs)
         self.buffer.add(state_cnn, state_oth, action, reward, done)
 
-    def save_model(self):
-        filename = './' + str(self.num_agents)
+    def save_model(self, filename):
+        # filename = './' + str(self.num_agents)
         torch.save(self.model.state_dict(), filename)
 
     def load_model(self, filename):
