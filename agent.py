@@ -5,9 +5,10 @@ from buffer import ReplayBuffer
 import torch.nn as nn
 import torch.optim as optim
 import random
+import datetime
 
 class Agent():
-    def __init__(self):
+    def __init__(self, args):
         self.buffer_size =5000
         self.batch_size = 32
         self.num_agents = 0
@@ -16,6 +17,7 @@ class Agent():
         self.buffer = []
         self.time = 0
         self.gamma = 0.9
+        self.args = args
 
     def init(self, obs):
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -23,6 +25,8 @@ class Agent():
         self.num_agents = len(obs['image'])
         self.buffer = ReplayBuffer(self.buffer_size, self.batch_size, self.num_agents)
         self.model = VDN(self.num_agents, self.num_of_actions, self.device).to(self.device)
+        if self.args.model != 'None':
+            self.load_model(self.args.model)
         self.target = VDN(self.num_agents, self.num_of_actions, self.device).to(self.device)
         self.update_target()
         self.optimizer = optim.Adam(self.model.parameters())
@@ -35,8 +39,8 @@ class Agent():
         for i in range(len(obs["image"])):
             temp.append(np.r_[obs["image"][i]])
         temp = np.r_[temp]
-        t = np.transpose(temp, (0,3,1,2)).astype(float)
-        t /= 255.0
+        t = np.transpose(temp, (0,3,1,2))
+        # t /= 255.0
         return t
 
     def get_obs_oth(self, obs):
@@ -103,8 +107,18 @@ class Agent():
         self.optimizer.step()
         if self.time % 10 == 0:
             self.update_target()
+            self.save_model()
 
     def store_experience(self, obs, action, reward, done):
         state_cnn = self.get_obs_cnn(obs)
         state_oth = self.get_obs_oth(obs)
         self.buffer.add(state_cnn, state_oth, action, reward, done)
+
+    def save_model(self):
+        filename = './' + str(self.num_agents)
+        torch.save(self.model.state_dict(), filename)
+
+    def load_model(self, filename):
+        # filename = './' + self.num_agents
+        self.model.load_state_dict(torch.load(filename))
+        self.model.eval()

@@ -17,7 +17,8 @@ class Policy(nn.Module):
         self.q = nn.Linear(128, num_actions)
 
     def forward(self, state_cnn, state_oth):
-
+        state_cnn /= 255.0
+        state_oth /= 255.0
         h = torch.tanh(self.bn1(self.conv1(state_cnn)))
         h2 = torch.tanh(self.bn2(self.conv2(h)))
         h3 = torch.tanh(self.bn3(self.conv3(h2)))
