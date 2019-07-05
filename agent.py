@@ -102,10 +102,12 @@ class Agent():
 
         state_cnn, state_oth, action, reward, next_cnn, next_oth, done = self.buffer.sample()
 
-        max_q = self.target(next_cnn, next_oth)[0].detach()
-        _, _,  pred_q = self.model(state_cnn, state_oth, action)
+        # max_q = self.target(next_cnn, next_oth)[0].detach()
+        pred_q = self.model(state_cnn, state_oth, action)[2]
+        target_chosen_actions = self.model(next_cnn, next_oth)[1]
+        max_q = self.target(next_cnn, next_oth, target_chosen_actions)[2]
         reward = reward.sum(1)
-        true_q = reward + (1 - done[:,0]) * self.gamma * max_q
+        true_q = reward + (1 - done[:,0]) * self.gamma * max_q.detach()
         criterion = nn.MSELoss()
         loss = criterion(pred_q, true_q)
         self.optimizer.zero_grad()

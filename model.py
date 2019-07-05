@@ -45,6 +45,7 @@ class VDN(nn.Module):
         shaped = o.view(int(o.shape[0]/self.num_agents), self.num_agents, self.num_actions)
         max_q, actions = torch.max(shaped, 2)
         if action is not None:
+            action = torch.tensor(action).float().to(self.device)
             take_action = torch.zeros_like(action)
             for i in range(shaped.shape[0]):
                 # print(shaped[i],action[i])
