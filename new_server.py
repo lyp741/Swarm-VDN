@@ -48,8 +48,7 @@ class IndexHandler(tornado.web.RequestHandler):
         self.write(greeting + ', friendly user!')
 
 class StatusHandler(tornado.websocket.WebSocketHandler):
-    agent = Agent(args)
-    
+    agent = Agent()
     agent_initialized = False
     cycle_counter = 1
     rgb_image_count = 1
@@ -129,13 +128,10 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
         
         end_episode = np.array(dat['endEpisode'], dtype=np.bool)
 
-        
+        actions = self.agent.get_action(observation, 0.8, end_episode)
         if args.model == 'None':
-            actions = self.agent.get_action(observation, 0.8, end_episode)
             self.agent.store_experience(observation, actions, reward, end_episode)
             self.agent.learn()
-        else:
-            actions = self.agent.get_action(observation, 1.0, end_episode)
         print(actions, reward)
         self.send_action(actions)
 

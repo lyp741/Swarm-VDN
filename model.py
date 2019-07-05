@@ -17,8 +17,7 @@ class Policy(nn.Module):
         self.q = nn.Linear(128, num_actions)
 
     def forward(self, state_cnn, state_oth):
-        state_cnn /= 255.0
-        state_oth /= 255.0
+
         h = torch.tanh(self.bn1(self.conv1(state_cnn)))
         h2 = torch.tanh(self.bn2(self.conv2(h)))
         h3 = torch.tanh(self.bn3(self.conv3(h2)))
@@ -37,19 +36,11 @@ class VDN(nn.Module):
         self.num_agents = num_agents
         self.device = device
 
-    def forward(self, state_cnn, state_oth, action=None):
-        take_q = None
+    def forward(self, state_cnn, state_oth):
         state_cnn = torch.tensor(state_cnn).float().to(self.device)
         state_oth = torch.tensor(state_oth).float().to(self.device)
         o = self.policy(state_cnn,state_oth)
         shaped = o.view(int(o.shape[0]/self.num_agents), self.num_agents, self.num_actions)
         max_q, actions = torch.max(shaped, 2)
-        if action is not None:
-            take_action = torch.zeros_like(action)
-            for i in range(shaped.shape[0]):
-                # print(shaped[i],action[i])
-                a = action[i].unsqueeze(1).long()
-                take_action[i] = torch.gather(shaped[i],1, a).squeeze()
-            take_q = take_action.sum(1)
         q = max_q.sum(1)
-        return q, actions, take_q
+        return q, actions
