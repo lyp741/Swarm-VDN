@@ -15,8 +15,13 @@ class Policy(nn.Module):
         self.l1 = nn.Linear(6294,128)
         self.l2 = nn.Linear(128,128)
         self.q = nn.Linear(128, num_actions)
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.device = torch.device(self.device)
+
 
     def forward(self, state_cnn, state_oth):
+        state_cnn = torch.tensor(state_cnn).float().to(self.device)
+        state_oth = torch.tensor(state_oth).float().to(self.device)
         state_cnn /= 255.0
         state_oth /= 255.0
         h = torch.tanh(self.bn1(self.conv1(state_cnn)))

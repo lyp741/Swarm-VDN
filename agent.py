@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from model import VDN
+from model import Policy
 from buffer import ReplayBuffer
 import torch.nn as nn
 import torch.optim as optim
@@ -10,7 +10,7 @@ import os
 
 class Agent():
     def __init__(self, args):
-        self.buffer_size =5000
+        self.buffer_size = int(2e5)
         self.batch_size = 32
         self.num_agents = 0
         self.num_of_actions = 8
@@ -30,10 +30,10 @@ class Agent():
         self.device = torch.device(self.device)
         self.num_agents = len(obs['image'])
         self.buffer = ReplayBuffer(self.buffer_size, self.batch_size, self.num_agents)
-        self.model = VDN(self.num_agents, self.num_of_actions, self.device).to(self.device)
+        self.model = Policy(self.num_of_actions).to(self.device)
         if self.args.model != 'None':
             self.load_model(self.args.model)
-        self.target = VDN(self.num_agents, self.num_of_actions, self.device).to(self.device)
+        self.target = Policy(self.num_of_actions).to(self.device)
         self.update_target()
         self.optimizer = optim.Adam(self.model.parameters())
         self.last_state_cnn = np.zeros((self.num_agents,3,128,128))
@@ -77,13 +77,14 @@ class Agent():
         state_oth = self.get_obs_oth(obs)
         cat_cnn = self.get_new_cnn(state_cnn)
         cat_oth = self.get_new_oth(state_oth)
-        q, actions, _ = self.model(cat_cnn,cat_oth)
+        q = self.model(cat_cnn,cat_oth)
+        actions = q.max(1)[1]
         index_action = np.zeros((self.num_agents,), dtype=np.uint8)
         for i in range(self.num_agents):
             if random.random() > epsilon:
                 index_action[i] = random.randint(0, self.num_of_actions - 1)
             else:
-                index_action[i] = actions[0,i].item()
+                index_action[i] = actions[i].item()
 
         if done.item(0) != True:
             self.last_state_cnn = state_cnn
@@ -102,12 +103,14 @@ class Agent():
 
         state_cnn, state_oth, action, reward, next_cnn, next_oth, done = self.buffer.sample()
 
-        # max_q = self.target(next_cnn, next_oth)[0].detach()
-        pred_q = self.model(state_cnn, state_oth, action)[2]
-        target_chosen_actions = self.model(next_cnn, next_oth)[1]
-        max_q = self.target(next_cnn, next_oth, target_chosen_actions)[2]
-        reward = reward.sum(1)
-        true_q = reward + (1 - done[:,0]) * self.gamma * max_q.detach()
+        # max_q = self.target(next_cnn, next_oth).max(1)[0].unsqueeze(1).detach()
+        pred_q = self.model(state_cnn, state_oth)
+        pred_q = pred_q.gather(1, action.view(-1).unsqueeze(1).long())
+        target_chosen_actions = self.model(next_cnn, next_oth).max(1)[1].unsqueeze(1)
+        max_q = self.target(next_cnn, next_oth).gather(1, target_chosen_actions)
+        reward = reward.view(-1,1)
+
+        true_q = reward + (1 - done) * self.gamma * max_q.detach()
         criterion = nn.MSELoss()
         loss = criterion(pred_q, true_q)
         self.optimizer.zero_grad()

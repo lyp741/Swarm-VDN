@@ -24,25 +24,25 @@ class ReplayBuffer:
         
     def add(self, state_cnn, state_oth, action, reward, done):
         " Add a new experience to memory "
-        # for i in range(self.n_agents):
-        e = self.experience(state_cnn, state_oth, action, reward, done)
-        self.memory.append(e)
+        for i in range(self.n_agents):
+            e = self.experience(state_cnn[i], state_oth[i], action[i], reward[i], done)
+            self.memory.append(e)
         
     def sample(self):
         " Randomly sample a batch of experiences from the memory "
-        rand_idx = np.random.randint(1,len(self.memory)-1,self.batch_size)
-        next_rand_idx = rand_idx + 1
-        prev_rand_idx = rand_idx - 1
+        rand_idx = np.random.randint(1,len(self.memory)-self.n_agents,self.batch_size)
+        next_rand_idx = rand_idx + self.n_agents
+        prev_rand_idx = rand_idx - self.n_agents
 
         states = [self.memory[i] for i in rand_idx]
         next_states = [self.memory[i] for i in next_rand_idx]
         prev_states = [self.memory[i] for i in prev_rand_idx]
 
-        prev_states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in prev_states if e is not None])).float()
+        prev_states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in prev_states if e is not None])).float().view(self.batch_size,3,128,128)
         prev_states_oth = torch.from_numpy(np.vstack([e.state_oth for e in prev_states if e is not None])).float()
-        states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in states if e is not None])).float()
+        states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in states if e is not None])).float().view(self.batch_size,3,128,128)
         states_oth = torch.from_numpy(np.vstack([e.state_oth for e in states if e is not None])).float()
-        next_states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in next_states if e is not None])).float()
+        next_states_cnn = torch.from_numpy(np.vstack([e.state_cnn for e in next_states if e is not None])).float().view(self.batch_size,3,128,128)
         next_states_oth = torch.from_numpy(np.vstack([e.state_oth for e in next_states if e is not None])).float()
 
         actions = torch.from_numpy(np.vstack([e.action for e in states if e is not None])).float()
