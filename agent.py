@@ -10,14 +10,15 @@ import os
 
 class Agent():
     def __init__(self, args):
-        self.buffer_size = int(2e5)
+        self.buffer_size = int(3e5)
         self.batch_size = 32
         self.num_agents = 0
         self.num_of_actions = 8
         self.model = []
         self.buffer = []
         self.time = 0
-        self.gamma = 0.9
+        self.gamma = 0.95
+        self.episode_length = 10000
         self.args = args
         self.time_now = datetime.datetime.now().strftime('%Y-%m-%d')
         try:
@@ -33,6 +34,7 @@ class Agent():
         self.model = Policy(self.num_of_actions).to(self.device)
         if self.args.model != 'None':
             self.load_model(self.args.model)
+        # self.load_model('2019-07-09/30_160600')
         self.target = Policy(self.num_of_actions).to(self.device)
         self.update_target()
         self.optimizer = optim.Adam(self.model.parameters())

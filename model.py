@@ -12,7 +12,7 @@ class Policy(nn.Module):
         self.bn2 = nn.BatchNorm2d(32)
         self.conv3 = nn.Conv2d(32,32,4,2)
         self.bn3 = nn.BatchNorm2d(32)
-        self.l1 = nn.Linear(6294,128)
+        self.l1 = nn.Linear(6272,128)
         self.l2 = nn.Linear(128,128)
         self.q = nn.Linear(128, num_actions)
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -21,13 +21,14 @@ class Policy(nn.Module):
 
     def forward(self, state_cnn, state_oth):
         state_cnn = torch.tensor(state_cnn).float().to(self.device)
-        state_oth = torch.tensor(state_oth).float().to(self.device)
+        # state_oth = torch.tensor(state_oth).float().to(self.device)
         state_cnn /= 255.0
-        state_oth /= 255.0
+        # state_oth /= 255.0
         h = torch.tanh(self.bn1(self.conv1(state_cnn)))
         h2 = torch.tanh(self.bn2(self.conv2(h)))
         h3 = torch.tanh(self.bn3(self.conv3(h2)))
-        h4 = torch.cat((h3.view(state_oth.shape[0],-1),state_oth),1)
+        # h4 = torch.cat((h3.view(state_oth.shape[0],-1),state_oth),1)
+        h4 = h3.view(state_cnn.shape[0],-1)
         # print('policy forward ',h4)
         h5 = F.relu(self.l1(h4))
         h6 = F.relu(self.l2(h5))

@@ -59,6 +59,9 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
     ground_count = 0
     compass_count = 1
     target_count = 1
+    min_eps = 0.1
+    eps = 1
+    eps_delta = 1/6e4
 
     if args.mode_distribute:
         thread_event = threading.Event()
@@ -129,9 +132,10 @@ class StatusHandler(tornado.websocket.WebSocketHandler):
         
         end_episode = np.array(dat['endEpisode'], dtype=np.bool)
 
-        
         if args.model == 'None':
-            actions = self.agent.get_action(observation, 0.8, end_episode)
+            self.eps -= self.eps_delta
+            self.eps = self.min_eps if self.eps <= self.min_eps else self.eps
+            actions = self.agent.get_action(observation, 1-self.eps, end_episode)
             self.agent.store_experience(observation, actions, reward, end_episode)
             self.agent.learn()
         else:
